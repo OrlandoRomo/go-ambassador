@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/OrlandoRomo/go-ambassador/src/database"
-	"github.com/OrlandoRomo/go-ambassador/src/models"
+	"github.com/OrlandoRomo/go-ambassador/src/middleware"
+	"github.com/OrlandoRomo/go-ambassador/src/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,7 +28,7 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
-	admin := models.NewUser(body)
+	admin := model.NewUser(body)
 
 	admin.SetPassword(body["password"])
 
@@ -46,7 +47,7 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	user := new(models.User)
+	user := new(model.User)
 
 	database.DB.Where("email=?", data["email"]).First(user)
 
@@ -87,7 +88,28 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
-func generateJWT(user *models.User) (string, error) {
+func User(c *fiber.Ctx) error {
+	idUser, err := middleware.GetUserId(c)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "error getting user",
+		})
+	}
+	var user model.User
+	database.DB.Where("id = ?", idUser).Find(&user)
+	return c.JSON(user)
+}
+
+func Logout(c *fiber.Ctx) error {
+	cookie := c.Cookies("go_auth")
+	c.ClearCookie(cookie)
+	return c.JSON(fiber.Map{
+		"message": "logout successfully",
+	})
+}
+
+func generateJWT(user *model.User) (string, error) {
 	payload := jwt.StandardClaims{
 		Subject:   strconv.Itoa(int(user.ID)),
 		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),

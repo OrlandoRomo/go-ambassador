@@ -1,4 +1,4 @@
-package models
+package model
 
 import "golang.org/x/crypto/bcrypt"
 
@@ -6,9 +6,9 @@ type User struct {
 	ID           uint   `json:"id"`
 	FirstName    string `json:"first_name"`
 	LastName     string `json:"last_name"`
-	Email        string `json:"email"`
+	Email        string `json:"email" gorm:"unique"`
 	Password     []byte `json:"-"`
-	IsAmbassador bool   `json:"is_ambassador"`
+	IsAmbassador bool   `json:"-"`
 }
 
 func NewUser(data map[string]string) *User {
