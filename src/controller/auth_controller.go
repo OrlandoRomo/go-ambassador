@@ -6,37 +6,10 @@ import (
 	"time"
 
 	"github.com/OrlandoRomo/go-ambassador/src/database"
-	"github.com/OrlandoRomo/go-ambassador/src/middleware"
 	"github.com/OrlandoRomo/go-ambassador/src/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
-
-func Register(c *fiber.Ctx) error {
-	var body map[string]string
-	if err := c.BodyParser(&body); err != nil {
-		c.Status(http.StatusBadRequest)
-		return c.JSON(fiber.Map{
-			"message": "bad request",
-		})
-	}
-
-	if body["password"] != body["confirmed_password"] {
-		c.Status(http.StatusBadRequest)
-		return c.JSON(fiber.Map{
-			"message": "password does not match",
-		})
-	}
-
-	admin := model.NewUser(body)
-
-	admin.SetPassword(body["password"])
-
-	database.DB.Create(&admin)
-
-	c.Status(http.StatusCreated)
-	return c.JSON(&admin)
-}
 
 func Login(c *fiber.Ctx) error {
 	var data map[string]string
@@ -86,19 +59,6 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "log in success",
 	})
-}
-
-func User(c *fiber.Ctx) error {
-	idUser, err := middleware.GetUserId(c)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return c.JSON(fiber.Map{
-			"message": "error getting user",
-		})
-	}
-	var user model.User
-	database.DB.Where("id = ?", idUser).Find(&user)
-	return c.JSON(user)
 }
 
 func Logout(c *fiber.Ctx) error {
