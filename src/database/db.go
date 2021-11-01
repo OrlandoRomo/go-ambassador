@@ -23,5 +23,5 @@ func Connect() {
 
 // AutoMigrate migrates the models
 func AutoMigrate() {
-	DB.AutoMigrate(model.User{})
+	DB.AutoMigrate(model.User{}, model.Product{})
 }

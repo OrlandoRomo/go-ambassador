@@ -7,7 +7,7 @@ import (
 )
 
 func SetUserRoutes(user fiber.Router) fiber.Router {
-	user.Post("/users/", controller.NewUser)
+	user.Post("/users/", controller.CreateUser)
 	user.Get("/users/", middleware.AuthMiddleware, controller.GetUser)
 	user.Put("/users/", middleware.AuthMiddleware, controller.UpdateUser)
 	user.Put("/users/password/", middleware.AuthMiddleware, controller.UpdatePassword)

@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func NewUser(c *fiber.Ctx) error {
+func CreateUser(c *fiber.Ctx) error {
 	var body map[string]string
 	if err := c.BodyParser(&body); err != nil {
 		c.Status(http.StatusBadRequest)
@@ -135,5 +135,4 @@ func UpdatePassword(c *fiber.Ctx) error {
 	}
 	c.Status(http.StatusNoContent)
 	return nil
-
 }
