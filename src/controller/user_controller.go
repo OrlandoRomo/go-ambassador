@@ -77,11 +77,11 @@ func UpdateUser(c *fiber.Ctx) error {
 		LastName:  body["last_name"],
 		Email:     body["email"],
 	}
-	tx := database.DB.Model(&user).Updates(&user)
-	if tx.Error != nil {
+	tcx := database.DB.Model(&user).Updates(&user)
+	if tcx.Error != nil {
 		c.Status(http.StatusInternalServerError)
 		return c.JSON(fiber.Map{
-			"message": tx.Error.Error(),
+			"message": tcx.Error.Error(),
 		})
 	}
 
@@ -126,11 +126,11 @@ func UpdatePassword(c *fiber.Ctx) error {
 
 	user.SetPassword(body["password"])
 
-	tx := database.DB.Model(&user).Updates(&user)
-	if tx.Error != nil {
+	tcx := database.DB.Model(&user).Updates(&user)
+	if tcx.Error != nil {
 		c.Status(http.StatusInternalServerError)
 		return c.JSON(fiber.Map{
-			"message": tx.Error.Error(),
+			"message": tcx.Error.Error(),
 		})
 	}
 	c.Status(http.StatusNoContent)

@@ -11,5 +11,6 @@ func SetUserRoutes(user fiber.Router) fiber.Router {
 	user.Get("/users/", middleware.AuthMiddleware, controller.GetUser)
 	user.Put("/users/", middleware.AuthMiddleware, controller.UpdateUser)
 	user.Put("/users/password/", middleware.AuthMiddleware, controller.UpdatePassword)
+	user.Get("/users/:user_id/links/", middleware.AuthMiddleware, controller.GetLinksByUserId)
 	return user
 }

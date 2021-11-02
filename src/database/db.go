@@ -23,5 +23,14 @@ func Connect() {
 
 // AutoMigrate migrates the models
 func AutoMigrate() {
-	DB.AutoMigrate(model.User{}, model.Product{})
+	err := DB.AutoMigrate(
+		model.User{},
+		model.Product{},
+		model.Link{},
+		model.Order{},
+		model.OrderItem{},
+	)
+	if err != nil {
+		log.Println(err)
+	}
 }
