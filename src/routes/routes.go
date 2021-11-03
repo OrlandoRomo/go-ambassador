@@ -10,10 +10,14 @@ import (
 )
 
 func SetRoutes(app *fiber.App) {
-	api := app.Group("/api/v1/")
-	api = auth.SetAuthRoutes(api)
-	api = user.SetUserRoutes(api)
-	api = ambassador.SetAmbassadorRoutes(api)
-	api = product.SetProductRoutes(api)
-	api = order.SetOrderRoutes(api)
+	admin := app.Group("/api/v1/admin/")
+	admin = auth.SetAuthRoutes(admin)
+	admin = user.SetUserRoutes(admin)
+	admin = ambassador.SetAmbassadorAdminRoutes(admin)
+	admin = product.SetProductRoutes(admin)
+	admin = order.SetOrderRoutes(admin)
+
+	ambassador := app.Group("/api/v1/ambassador/")
+	ambassador = auth.SetAuthRoutes(ambassador)
+	ambassador = user.SetUserAmbassadorRoutes(ambassador)
 }

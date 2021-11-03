@@ -6,7 +6,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetAmbassadorRoutes(ambassador fiber.Router) fiber.Router {
+// Create routes for admin
+func SetAmbassadorAdminRoutes(ambassador fiber.Router) fiber.Router {
 	ambassador.Get("/ambassadors/", middleware.AuthMiddleware, controller.GetAmbassadors)
 	return ambassador
 }

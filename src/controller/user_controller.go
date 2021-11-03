@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/OrlandoRomo/go-ambassador/src/middleware"
 	"github.com/OrlandoRomo/go-ambassador/src/model"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func CreateUser(c *fiber.Ctx) error {
@@ -26,11 +28,22 @@ func CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	admin := model.NewUser(body)
+	admin := &model.User{
+		FirstName:    body["first_name"],
+		LastName:     body["last_name"],
+		Email:        body["email"],
+		IsAmbassador: middleware.IsAmbassadorPath(c),
+	}
 
 	admin.SetPassword(body["password"])
 
-	database.DB.Create(&admin)
+	tcx := database.DB.Create(&admin)
+	if tcx.Error != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": tcx.Error.Error(),
+		})
+	}
 
 	c.Status(http.StatusCreated)
 	return c.JSON(&admin)
@@ -45,7 +58,31 @@ func GetUser(c *fiber.Ctx) error {
 		})
 	}
 	var user model.User
-	database.DB.Where("id = ?", idUser).Find(&user)
+	tcx := database.DB.Where("id = ?", idUser).Find(&user)
+	if tcx.RowsAffected == 0 {
+		c.Status(http.StatusNotFound)
+		return c.JSON(fiber.Map{
+			"message": fmt.Sprintf("there is not a user with id `%s`", idUser),
+		})
+	}
+	if tcx.Error != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": tcx.Error.Error(),
+		})
+	}
+
+	if middleware.IsAmbassadorPath(c) {
+		ambassador := model.Ambassador(user)
+		revenue, err := calculateRevenue(c, ambassador.ID)
+		if err != nil {
+			return c.JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
+		ambassador.Revenue = revenue
+		return c.JSON(ambassador)
+	}
 	return c.JSON(user)
 }
 
@@ -135,4 +172,29 @@ func UpdatePassword(c *fiber.Ctx) error {
 	}
 	c.Status(http.StatusNoContent)
 	return nil
+}
+
+func calculateRevenue(c *fiber.Ctx, ID uint) (float64, error) {
+	var orders []model.Order
+	var revenue float64
+	tcx := database.DB.Preload("OrderItems").Find(&orders, &model.Order{
+		UserID:      ID,
+		IsCompleted: true,
+	})
+	if tcx.RowsAffected == 0 {
+		c.Status(http.StatusNotFound)
+		return 0.0, gorm.ErrRecordNotFound
+	}
+	if tcx.Error != nil {
+		c.Status(http.StatusInternalServerError)
+		return 0.0, tcx.Error
+	}
+
+	for _, order := range orders {
+		for _, orderItem := range order.OrderItems {
+			revenue += orderItem.AdminRevenue
+		}
+	}
+
+	return revenue, nil
 }

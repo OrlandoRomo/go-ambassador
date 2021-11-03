@@ -2,12 +2,11 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/OrlandoRomo/go-ambassador/src/database"
+	"github.com/OrlandoRomo/go-ambassador/src/middleware"
 	"github.com/OrlandoRomo/go-ambassador/src/model"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -38,7 +37,23 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	token, err := generateJWT(user)
+	isAmbassador := middleware.IsAmbassadorPath(c)
+	scope := ""
+	if isAmbassador {
+		scope = middleware.Ambassador
+	}
+	if !isAmbassador {
+		scope = middleware.Admin
+	}
+
+	if !isAmbassador && user.IsAmbassador {
+		c.Status(http.StatusUnauthorized)
+		return c.JSON(fiber.Map{
+			"message": "user unauthenticated",
+		})
+	}
+
+	token, err := middleware.GenerateJWT(user, scope)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		return c.JSON(fiber.Map{
@@ -67,18 +82,4 @@ func Logout(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "logout successfully",
 	})
-}
-
-func generateJWT(user *model.User) (string, error) {
-	payload := jwt.StandardClaims{
-		Subject:   strconv.Itoa(int(user.ID)),
-		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-	}
-
-	// TODO: replace []byte("secret") with a secured os variable
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, payload).SignedString([]byte("secret"))
-	if err != nil {
-		return "", err
-	}
-	return token, nil
 }
