@@ -14,3 +14,8 @@ func SetProductRoutes(product fiber.Router) fiber.Router {
 	product.Delete("/products/:product_id", middleware.AuthMiddleware, controller.DeleteProductById)
 	return product
 }
+
+func SetAmbassadorProductRoutes(product fiber.Router) fiber.Router {
+	product.Get("/products/frontend/", controller.GetProductsForFrontend)
+	return product
+}

@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/OrlandoRomo/go-ambassador/src/database"
 	"github.com/OrlandoRomo/go-ambassador/src/model"
@@ -121,4 +124,48 @@ func DeleteProductById(c *fiber.Ctx) error {
 	}
 	c.Status(http.StatusNoContent)
 	return nil
+}
+
+func GetProductsForFrontend(c *fiber.Ctx) error {
+	var products []model.Product
+
+	result, err := database.Cache.Get(context.Background(), "products_frontend").Result()
+	if err != nil {
+		tcx := database.DB.Find(&products)
+		if tcx.Error != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(fiber.Map{
+				"message": tcx.Error.Error(),
+			})
+		}
+		productsMarshal, err := json.Marshal(products)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(fiber.Map{
+				"message": tcx.Error.Error(),
+			})
+		}
+
+		if err = database.Cache.Set(context.Background(), "products_frontend", productsMarshal, 30*time.Minute).Err(); err != nil {
+			c.Status(http.StatusInternalServerError)
+			return c.JSON(fiber.Map{
+				"message": err.Error(),
+			})
+		}
+		return c.JSON(fiber.Map{
+			"products": products,
+		})
+	}
+
+	err = json.Unmarshal([]byte(result), &products)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"products": products,
+	})
 }

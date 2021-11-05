@@ -20,4 +20,5 @@ func SetRoutes(app *fiber.App) {
 	ambassador := app.Group("/api/v1/ambassador/")
 	ambassador = auth.SetAuthRoutes(ambassador)
 	ambassador = user.SetUserAmbassadorRoutes(ambassador)
+	ambassador = product.SetAmbassadorProductRoutes(ambassador)
 }
