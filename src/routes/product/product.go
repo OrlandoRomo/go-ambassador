@@ -17,5 +17,6 @@ func SetProductRoutes(product fiber.Router) fiber.Router {
 
 func SetAmbassadorProductRoutes(product fiber.Router) fiber.Router {
 	product.Get("/products/frontend/", controller.GetProductsForFrontend)
+	product.Get("/products/backend/", controller.GetProductsForBackend)
 	return product
 }
