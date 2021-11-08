@@ -118,6 +118,13 @@ func UpdateProductById(c *fiber.Ctx) error {
 			"message": tcx.Error.Error(),
 		})
 	}
+	intCmd := database.Cache.Del(context.Background(), "products_backend", "products_frontend")
+	if intCmd.Err() != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": intCmd.Err().Error(),
+		})
+	}
 
 	return c.JSON(product)
 }
@@ -276,14 +283,9 @@ func GetProductsForBackend(c *fiber.Ctx) error {
 	}
 
 	if page > lastPage {
-		searchProducts = make([]model.Product, 0)
+		c.Status(http.StatusNotFound)
 		return c.JSON(fiber.Map{
-			"products": searchProducts,
-			"meta": fiber.Map{
-				"total":     0,
-				"page":      0,
-				"last_page": 0,
-			},
+			"message": fmt.Sprintf("the page %d does not exist", page),
 		})
 	}
 

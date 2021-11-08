@@ -8,3 +8,7 @@ type Link struct {
 	Products []Product `json:"products" gorm:"many2many:link_products"`
 	Orders   []Order   `json:"orders" gorm:"-"`
 }
+
+type LinkRequest struct {
+	Products []int `json:"products"`
+}
