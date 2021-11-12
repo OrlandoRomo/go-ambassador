@@ -35,3 +35,15 @@ func (o *Order) GetTotal() float64 {
 	}
 	return total
 }
+
+type OrderRequest struct {
+	Code      string           `json:"code"`
+	FirstName string           `json:"first_name"`
+	LastName  string           `json:"last_name"`
+	Email     string           `json:"email"`
+	Address   string           `json:"address"`
+	Country   string           `json:"country"`
+	City      string           `json:"city"`
+	Zip       string           `json:"zip"`
+	Products  []map[string]int `json:"products"`
+}

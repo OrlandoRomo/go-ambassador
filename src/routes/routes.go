@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/OrlandoRomo/go-ambassador/src/routes/ambassador"
 	"github.com/OrlandoRomo/go-ambassador/src/routes/auth"
+	"github.com/OrlandoRomo/go-ambassador/src/routes/checkout"
 	"github.com/OrlandoRomo/go-ambassador/src/routes/link"
 	"github.com/OrlandoRomo/go-ambassador/src/routes/order"
 	"github.com/OrlandoRomo/go-ambassador/src/routes/product"
@@ -25,4 +26,7 @@ func SetRoutes(app *fiber.App) {
 	ambassador = product.SetAmbassadorProductRoutes(ambassador)
 	ambassador = link.SetLinkAmbassadorRoutes(ambassador)
 	ambassador = stat.SetStatAmbassador(ambassador)
+
+	checkouts := app.Group("/api/v1/checkout/")
+	checkouts = checkout.SetCheckoutRoutes(checkouts)
 }
