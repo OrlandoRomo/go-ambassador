@@ -20,5 +20,6 @@ func SetUserAmbassadorRoutes(user fiber.Router) fiber.Router {
 	user.Post("/users/", controller.CreateUser)
 	user.Put("/users/", middleware.AuthMiddleware, controller.UpdateUser)
 	user.Put("/users/password/", middleware.AuthMiddleware, controller.UpdatePassword)
+	user.Get("/users/rankings/", middleware.AuthMiddleware, controller.GetRankings)
 	return user
 }

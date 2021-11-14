@@ -1,4 +1,4 @@
-package stat
+package ranking
 
 import (
 	"github.com/OrlandoRomo/go-ambassador/src/controller"
@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetStatAmbassadorRoutes(stat fiber.Router) fiber.Router {
-	stat.Get("/stats/", middleware.AuthMiddleware, controller.GetStats)
+func SetRankingAmbassadorRoutes(stat fiber.Router) fiber.Router {
+	stat.Get("/rankings/", middleware.AuthMiddleware, controller.GetRankings)
 	return stat
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/OrlandoRomo/go-ambassador/src/database"
 	"github.com/OrlandoRomo/go-ambassador/src/model"
 	"github.com/gofiber/fiber/v2"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/checkout/session"
 )
 
 func GetLinksByCode(c *fiber.Ctx) error {
@@ -74,9 +76,11 @@ func CreateCheckoutOrders(c *fiber.Ctx) error {
 		City:            request.Country,
 		Zip:             request.Zip,
 	}
-	tcx = database.DB.Begin()
 
-	if err := tcx.Create(&order).Error; err != nil {
+	tcx = database.DB.Begin()
+	err := tcx.Create(&order).Error
+
+	if err != nil {
 		tcx.Rollback()
 		c.Status(http.StatusInternalServerError)
 		return c.JSON(fiber.Map{
@@ -84,22 +88,24 @@ func CreateCheckoutOrders(c *fiber.Ctx) error {
 		})
 	}
 
+	lineItems := make([]*stripe.CheckoutSessionLineItemParams, 0)
+
 	for _, p := range request.Products {
 		product := model.Product{
 			ID: uint(p["product_id"]),
 		}
 
-		tcx = database.DB.First(&product)
-		if tcx.RowsAffected == 0 {
+		tcxProduct := database.DB.First(&product)
+		if tcxProduct.RowsAffected == 0 {
 			c.Status(http.StatusNotFound)
 			return c.JSON(fiber.Map{
-				"message": fmt.Sprintf("there is not a prodict with %d\n", p["product_id"]),
+				"message": fmt.Sprintf("there is not a product with %d\n", p["product_id"]),
 			})
 		}
-		if tcx.Error != nil {
+		if tcxProduct.Error != nil {
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(fiber.Map{
-				"message": tcx.Error.Error(),
+				"message": tcxProduct.Error.Error(),
 			})
 		}
 
@@ -112,21 +118,99 @@ func CreateCheckoutOrders(c *fiber.Ctx) error {
 			AmbassadorRevenue: 0.1 * total,
 			AdminRevenue:      0.9 * total,
 		}
-
-		if err := tcx.Create(&item).Error; err != nil {
+		err = tcx.Create(&item).Error
+		if err != nil {
 			tcx.Rollback()
 			c.Status(http.StatusInternalServerError)
 			return c.JSON(fiber.Map{
 				"message": tcx.Error.Error(),
 			})
 		}
+
+		lineItems = append(lineItems, &stripe.CheckoutSessionLineItemParams{
+			Name:        &product.Title,
+			Description: &product.Description,
+			Images:      stripe.StringSlice([]string{product.Image}),
+			Amount:      stripe.Int64(100 * int64(product.Price)),
+			Currency:    stripe.String("usd"),
+			Quantity:    stripe.Int64(int64(p["quantity"])),
+		})
 	}
 
-	tcx.Commit()
+	params := stripe.CheckoutSessionParams{
+		// replace with dynamic values (this is the url for the frontend-side)
+		SuccessURL:         stripe.String("http://localhost:5000/success?source={CHECKOUT_SESSION_ID}"),
+		CancelURL:          stripe.String("http://localhost:5000/failure"),
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		LineItems:          lineItems,
+	}
+	source, err := session.New(&params)
+	if err != nil {
+		tcx.Rollback()
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	order.TransactionID = source.ID
 
-	return c.JSON(order)
+	if err := tcx.Save(&order).Error; err != nil {
+		tcx.Rollback()
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": tcx.Error.Error(),
+		})
+	}
+
+	if err := tcx.Commit().Error; err != nil {
+		return c.JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(source)
 }
 
 func ConfirmCheckoutOrders(c *fiber.Ctx) error {
-	return nil
+	var data map[string]string
+	if err := c.BodyParser(&data); err != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	order := model.Order{}
+	tcx := database.DB.Begin()
+
+	tcx = database.DB.Preload("OrderItems").First(&order, model.Order{
+		TransactionID: data["source"],
+	})
+
+	if tcx.RowsAffected == 0 {
+		c.Status(http.StatusNotFound)
+		return c.JSON(fiber.Map{
+			"message": fmt.Sprintf("there is not order's transaction id with %s\n", data["source"]),
+		})
+	}
+
+	if tcx.Error != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": tcx.Error.Error(),
+		})
+	}
+
+	order.IsCompleted = true
+	if err := tcx.Save(&order).Error; err != nil {
+		c.Status(http.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": tcx.Error.Error(),
+		})
+
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
 }

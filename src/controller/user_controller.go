@@ -74,7 +74,7 @@ func GetUser(c *fiber.Ctx) error {
 
 	if middleware.IsAmbassadorPath(c) {
 		ambassador := model.Ambassador(user)
-		revenue, err := calculateRevenue(c, ambassador.ID)
+		revenue, err := CalculateRevenue(c, ambassador.ID)
 		if err != nil {
 			return c.JSON(fiber.Map{
 				"message": err.Error(),
@@ -174,7 +174,7 @@ func UpdatePassword(c *fiber.Ctx) error {
 	return nil
 }
 
-func calculateRevenue(c *fiber.Ctx, ID uint) (float64, error) {
+func CalculateRevenue(c *fiber.Ctx, ID uint) (float64, error) {
 	var orders []model.Order
 	var revenue float64
 	tcx := database.DB.Preload("OrderItems").Find(&orders, &model.Order{
