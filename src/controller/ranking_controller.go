@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/OrlandoRomo/go-ambassador/src/database"
 	"github.com/go-redis/redis/v8"
@@ -24,10 +25,11 @@ func GetRankings(c *fiber.Ctx) error {
 	results := make(map[string]float64)
 
 	for _, ranking := range rankings {
-		results[ranking.Member.(string)] = ranking.Score
+		member := strings.ToLower(ranking.Member.(string))
+		results[member] = ranking.Score
 	}
 
 	return c.JSON(fiber.Map{
-		"rankings": rankings,
+		"rankings": results,
 	})
 }

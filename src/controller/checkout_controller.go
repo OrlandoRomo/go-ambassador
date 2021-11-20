@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"net/smtp"
 
 	"github.com/OrlandoRomo/go-ambassador/src/database"
 	"github.com/OrlandoRomo/go-ambassador/src/model"
@@ -10,6 +12,14 @@ import (
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/checkout/session"
 )
+
+type MailHog struct {
+	Host       string
+	From       string
+	AdminEmail string
+}
+
+var MailHogClient MailHog
 
 func GetLinksByCode(c *fiber.Ctx) error {
 	code := c.Params("code")
@@ -181,9 +191,8 @@ func ConfirmCheckoutOrders(c *fiber.Ctx) error {
 	}
 
 	order := model.Order{}
-	tcx := database.DB.Begin()
 
-	tcx = database.DB.Preload("OrderItems").First(&order, model.Order{
+	tcx := database.DB.Preload("OrderItems").First(&order, model.Order{
 		TransactionID: data["source"],
 	})
 
@@ -201,14 +210,37 @@ func ConfirmCheckoutOrders(c *fiber.Ctx) error {
 		})
 	}
 
+	if !order.IsCompleted {
+		order.IsCompleted = true
+	}
+
 	order.IsCompleted = true
 	if err := tcx.Save(&order).Error; err != nil {
 		c.Status(http.StatusInternalServerError)
 		return c.JSON(fiber.Map{
 			"message": tcx.Error.Error(),
 		})
-
 	}
+
+	ambassadorRevenue := 0.0
+	adminRevenue := 0.0
+	for _, item := range order.OrderItems {
+		ambassadorRevenue += item.AmbassadorRevenue
+		adminRevenue += item.AdminRevenue
+	}
+	user := model.User{
+		ID: order.UserID,
+	}
+	database.DB.First(&user)
+	database.Cache.ZIncrBy(context.Background(), "rankings", ambassadorRevenue, user.GetFullName())
+
+	ambassadorMessage := []byte(fmt.Sprintf("You earned %.2f from the link #%s", ambassadorRevenue, order.Code))
+
+	smtp.SendMail(MailHogClient.Host, nil, MailHogClient.From, []string{order.AmbassadorEmail}, ambassadorMessage)
+
+	adminMessage := []byte(fmt.Sprintf("You earned %.2f from the link #%s", ambassadorRevenue, order.Code))
+
+	smtp.SendMail(MailHogClient.Host, nil, MailHogClient.From, []string{MailHogClient.AdminEmail}, adminMessage)
 
 	return c.JSON(fiber.Map{
 		"message": "success",

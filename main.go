@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/OrlandoRomo/go-ambassador/src/controller"
 	"github.com/OrlandoRomo/go-ambassador/src/database"
 	"github.com/OrlandoRomo/go-ambassador/src/routes"
 	"github.com/gofiber/fiber/v2"
@@ -12,13 +13,23 @@ import (
 )
 
 func main() {
-	var StripeSecretApiKey = flag.String("stripe_secret_api_key", envString("STRIPE_SECRET_API_KEY", ""), "Set up stripe secret api key")
+	var (
+		StripeSecretApiKey = flag.String("stripe_secret_api_key", envString("STRIPE_SECRET_API_KEY", ""), "Set up stripe secret api key")
+		MailHogHost        = flag.String("mail_hog_host", envString("MAIL_HOG_HOST", ""), "Mailhog host")
+		MailHostFrom       = flag.String("mail_hog_from", envString("MAIL_HOG_FROM", ""), "Mailhog email from")
+		MailHogAdminEmail  = flag.String("mail_hog_admin_email", envString("MAIL_HOG_ADMIN_EMAIL", ""), "Mailhog admin email")
+	)
+
 	flag.Parse()
 	database.Connect()
 	database.AutoMigrate()
 	database.SetUpRedis()
 
+	// Refactor these dependencies :p
 	stripe.Key = *StripeSecretApiKey
+	controller.MailHogClient.Host = *MailHogHost
+	controller.MailHogClient.From = *MailHostFrom
+	controller.MailHogClient.AdminEmail = *MailHogAdminEmail
 
 	app := fiber.New()
 

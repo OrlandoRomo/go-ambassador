@@ -8,6 +8,6 @@ import (
 func SetCheckoutRoutes(checkout fiber.Router) fiber.Router {
 	checkout.Get("/links/:code", controller.GetLinksByCode)
 	checkout.Post("/orders/", controller.CreateCheckoutOrders)
-	checkout.Post("/orders/confirm/", nil)
+	checkout.Post("/orders/confirm/", controller.ConfirmCheckoutOrders)
 	return checkout
 }

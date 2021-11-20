@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,6 +17,10 @@ type User struct {
 	Password     []byte  `json:"-"`
 	IsAmbassador bool    `json:"-"`
 	Revenue      float64 `json:"revenue,omitempty" gorm:"-"`
+}
+
+func (u *User) GetFullName() string {
+	return fmt.Sprintf("%s %s", u.FirstName, u.LastName)
 }
 
 func (u *User) SetPassword(password string) {
