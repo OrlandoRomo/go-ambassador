@@ -14,6 +14,7 @@ import (
 
 func CreateUser(c *fiber.Ctx) error {
 	var body map[string]string
+	admin := new(model.User)
 	if err := c.BodyParser(&body); err != nil {
 		c.Status(http.StatusBadRequest)
 		return c.JSON(fiber.Map{
@@ -28,7 +29,15 @@ func CreateUser(c *fiber.Ctx) error {
 		})
 	}
 
-	admin := &model.User{
+	tcx := database.DB.Where("email = ?", body["email"]).First(&admin)
+	if tcx.RowsAffected != 0 {
+		c.Status(http.StatusConflict)
+		return c.JSON(fiber.Map{
+			"message": fmt.Sprintf("The email %s already exists", body["email"]),
+		})
+	}
+
+	admin = &model.User{
 		FirstName:    body["first_name"],
 		LastName:     body["last_name"],
 		Email:        body["email"],
@@ -37,7 +46,7 @@ func CreateUser(c *fiber.Ctx) error {
 
 	admin.SetPassword(body["password"])
 
-	tcx := database.DB.Create(&admin)
+	tcx = database.DB.Create(&admin)
 	if tcx.Error != nil {
 		c.Status(http.StatusInternalServerError)
 		return c.JSON(fiber.Map{
