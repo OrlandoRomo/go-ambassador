@@ -36,7 +36,6 @@ services:
       - 6379:6379
   mailog:
     image: mailhog/mailhog
-    driver: 'none'
     ports:
       - 1025:1025
       - 8025:8025
