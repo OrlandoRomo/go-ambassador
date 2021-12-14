@@ -6,8 +6,8 @@
             "type": "go",
             "request": "attach",
             "mode": "remote",
-            "remotePath": "/go/src/go-ambassador",
-            "cwd": "/Users/orlandoromo/go/src/go-ambassador",
+            "remotePath": "/app",
+            "cwd": "/Users/orlando.romo/go/src/go-ambassador",
             "port": 2345,
             "host": "127.0.0.1",
             "showLog": true

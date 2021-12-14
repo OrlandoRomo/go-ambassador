@@ -1,3 +1,2 @@
 #!/usr/bin/env bash
-cd /go/src/go-ambassador
-air
+cd /app/cmd/go-ambassador/ && air

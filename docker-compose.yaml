@@ -9,14 +9,14 @@ services:
     ports:
       - 2345:2345
       - 8000:8000
-    security_opt:
-      - "seccomp:unconfined"
+    # security_opt:
+    #   - "seccomp:unconfined"
     volumes: 
-      - .:/go/src/go-ambassador
+      - .:/app
     depends_on:
       - db
       - redis
-      - mailog
+      # - mailog
   db:
     image: mysql:5.7.22
     restart: always
@@ -28,14 +28,14 @@ services:
     volumes:
       - .dbdata:/var/lib/mysql
     ports:
-      - 33066:3306
+      - 3306:3306
   redis:
     image: redis:latest
     restart: always
     ports:
       - 6379:6379
-  mailog:
-    image: mailhog/mailhog
-    ports:
-      - 1025:1025
-      - 8025:8025
+  # mailog:
+  #   image: mailhog/mailhog
+  #   ports:
+  #     - 1025:1025
+  #     - 8025:8025
