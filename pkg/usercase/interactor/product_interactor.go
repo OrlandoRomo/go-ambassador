@@ -11,6 +11,10 @@ type productInteractor struct {
 
 type ProductInteractor interface {
 	Get() ([]*model.Product, error)
+	Create(*model.Product) error
+	GetById(id int) (*model.Product, error)
+	Update(*model.Product) error
+	Delete(id int) error
 }
 
 func NewProductInteractor(r repository.ProductRepository) ProductInteractor {
@@ -23,4 +27,34 @@ func (p *productInteractor) Get() ([]*model.Product, error) {
 		return nil, err
 	}
 	return products, nil
+}
+
+func (p *productInteractor) Create(product *model.Product) error {
+	err := p.productRepository.CreateProduct(product)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *productInteractor) GetById(id int) (*model.Product, error) {
+	product, err := p.productRepository.GetProductById(id)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+
+func (p *productInteractor) Update(product *model.Product) error {
+	if err := p.productRepository.UpdateProductById(product); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *productInteractor) Delete(id int) error {
+	if err := p.productRepository.DeleteProductById(id); err != nil {
+		return err
+	}
+	return nil
 }

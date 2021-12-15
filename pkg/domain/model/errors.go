@@ -8,6 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type ErrInvalidType struct {
+	Field string
+}
+
+func (e ErrInvalidType) Error() string {
+	return fmt.Sprintf("the filed %s is not valid", e.Field)
+}
+
 type ErrInvalidCredentials struct{}
 
 func (e ErrInvalidCredentials) Error() string {
@@ -48,7 +56,7 @@ func EncodeError(c *fiber.Ctx, err error) error {
 	switch err.(type) {
 	case ErrNotFound:
 		c.Status(http.StatusNotFound)
-	case ErrInvalidCredentials, ErrPasswordMatch:
+	case ErrInvalidCredentials, ErrPasswordMatch, ErrInvalidType:
 		c.Status(http.StatusBadRequest)
 	case ErrUnauthorized:
 		c.Status(http.StatusUnauthorized)
