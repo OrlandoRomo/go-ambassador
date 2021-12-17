@@ -45,9 +45,7 @@ func (u *userController) CreateUser(c *fiber.Ctx) error {
 	}
 
 	// Verify whether a user already exists with data["email"] or not
-	if err := u.userInteractor.Get(admin, SearchByEmail); err != nil {
-		return model.EncodeError(c, err)
-	}
+	_ = u.userInteractor.Get(admin, SearchByEmail)
 
 	if admin != nil && admin.ID != 0 {
 		return model.EncodeError(c, model.ErrEmailExist{Email: admin.Email})

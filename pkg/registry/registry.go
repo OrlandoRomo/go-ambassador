@@ -10,7 +10,7 @@ type Register interface {
 	NewAppController() controller.AppController
 }
 
-func Newegister(db *gorm.DB, redis *redis.Client) Register {
+func NewRegister(db *gorm.DB, redis *redis.Client) Register {
 	return &register{db, redis}
 }
 
@@ -21,8 +21,12 @@ type register struct {
 
 func (r *register) NewAppController() controller.AppController {
 	return controller.AppController{
-		Auth:    r.NewAuthController(),
-		User:    r.NewUserController(),
-		Product: r.NewProductController(),
+		Auth:       r.NewAuthController(),
+		User:       r.NewUserController(),
+		Product:    r.NewProductController(),
+		Ambassador: r.NewAmbassadorController(),
+		Link:       r.NewLinkController(),
+		Ranking:    r.NewRankingController(),
+		Order:      r.NewOrderController(),
 	}
 }

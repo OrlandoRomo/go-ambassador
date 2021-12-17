@@ -15,6 +15,7 @@ type ProductInteractor interface {
 	GetById(id int) (*model.Product, error)
 	Update(*model.Product) error
 	Delete(id int) error
+	Cache(*model.SearchProduct) (interface{}, error)
 }
 
 func NewProductInteractor(r repository.ProductRepository) ProductInteractor {
@@ -57,4 +58,12 @@ func (p *productInteractor) Delete(id int) error {
 		return err
 	}
 	return nil
+}
+
+func (p *productInteractor) Cache(s *model.SearchProduct) (interface{}, error) {
+	result, err := p.productRepository.GetProductsBackend(s)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

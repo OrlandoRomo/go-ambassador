@@ -16,6 +16,6 @@ func SetUserRoutes(r *fiber.Router, c *controller.AppController, version string)
 		// user.Get("/users/:user_id/links/") this for /api/v1/admin/
 	}
 	if version == AmbassadorVersion {
-		// user.Get("/users/rankings/", middleware.AuthMiddleware, controller.GetRankings) this is for /api/v1/ambassador/
+		user.Get("/users/rankings/", middleware.AuthMiddleware, c.Ranking.GetRankings)
 	}
 }

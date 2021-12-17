@@ -7,3 +7,10 @@ type Product struct {
 	Image       string  `json:"image"`
 	Price       float64 `json:"price"`
 }
+
+type SearchProduct struct {
+	Search string
+	Sort   string
+	Page   int
+	Result []*Product
+}

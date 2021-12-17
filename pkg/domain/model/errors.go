@@ -8,12 +8,20 @@ import (
 	"gorm.io/gorm"
 )
 
+type ErrPage struct {
+	Page int
+}
+
+func (e ErrPage) Error() string {
+	return fmt.Sprintf("the page %d does not exist", e.Page)
+}
+
 type ErrInvalidType struct {
 	Field string
 }
 
 func (e ErrInvalidType) Error() string {
-	return fmt.Sprintf("the filed %s is not valid", e.Field)
+	return fmt.Sprintf("the field %s is not valid", e.Field)
 }
 
 type ErrInvalidCredentials struct{}
@@ -54,7 +62,7 @@ func (e ErrPasswordMatch) Error() string {
 func EncodeError(c *fiber.Ctx, err error) error {
 	// Switch for types
 	switch err.(type) {
-	case ErrNotFound:
+	case ErrNotFound, ErrPage:
 		c.Status(http.StatusNotFound)
 	case ErrInvalidCredentials, ErrPasswordMatch, ErrInvalidType:
 		c.Status(http.StatusBadRequest)

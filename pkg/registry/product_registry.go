@@ -16,5 +16,5 @@ func (r *register) NewProductInteractor() interactor.ProductInteractor {
 }
 
 func (r *register) NewProductRepository() ur.ProductRepository {
-	return ir.NewProductRepository(r.db)
+	return ir.NewProductRepository(r.db, r.redis)
 }

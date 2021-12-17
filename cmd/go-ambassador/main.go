@@ -50,7 +50,7 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	r := registry.Newegister(ambassadorDB, redis)
+	r := registry.NewRegister(ambassadorDB, redis)
 	router.NewRouter(app, r.NewAppController())
 
 	app.Listen(":8000")

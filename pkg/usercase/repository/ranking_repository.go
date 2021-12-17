@@ -1,5 +1,5 @@
 package repository
 
-type RankingRepository interface {
+type RankingCache interface {
 	GetRanking() (map[string]float64, error)
 }

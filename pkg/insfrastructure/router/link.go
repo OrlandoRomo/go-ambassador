@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetOrderRoutes(r *fiber.Router, c *controller.AppController) {
-	order := *r
-	order.Get("/orders/", middleware.AuthMiddleware, c.Order.GetOrders)
+func SetLinkRoutes(r *fiber.Router, c *controller.AppController) {
+	link := *r
+	link.Post("/links/", middleware.AuthMiddleware, c.Link.CreateLink)
 }

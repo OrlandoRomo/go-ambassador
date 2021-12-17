@@ -20,6 +20,8 @@ type ProductController interface {
 	GetProductById(c *fiber.Ctx) error
 	UpdateProductById(c *fiber.Ctx) error
 	DeleteProductById(c *fiber.Ctx) error
+	GetProductsForFrontend(c *fiber.Ctx) error
+	GetProductsForBackend(c *fiber.Ctx) error
 }
 
 func NewProductController(i interactor.ProductInteractor) ProductController {
@@ -115,4 +117,29 @@ func (p *productController) DeleteProductById(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": fmt.Sprintf("product with %d was deleted successfully", id),
 	})
+}
+
+func (p *productController) GetProductsForFrontend(c *fiber.Ctx) error {
+	return nil
+}
+
+func (p *productController) GetProductsForBackend(c *fiber.Ctx) error {
+	fmt.Println("ALV PINCHE PRRO")
+	page, err := strconv.Atoi(c.Query("page", "1"))
+	if err != nil {
+		return model.EncodeError(c, model.ErrInvalidType{
+			Field: "page",
+		})
+	}
+	sp := model.SearchProduct{
+		Search: c.Query("search"),
+		Sort:   c.Query("sort"),
+		Page:   page,
+		Result: make([]*model.Product, 0),
+	}
+	result, err := p.productInteractor.Cache(&sp)
+	if err != nil {
+		return model.EncodeError(c, err)
+	}
+	return c.JSON(result)
 }
