@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/OrlandoRomo/go-ambassador/pkg/insfrastructure/cache"
 	"github.com/OrlandoRomo/go-ambassador/pkg/insfrastructure/db"
@@ -16,18 +18,12 @@ import (
 )
 
 func main() {
-	var (
-	// StripeSecretApiKey = flag.String("stripe_secret_api_key", envString("STRIPE_SECRET_API_KEY", ""), "Set up stripe secret api key")
-	// MailHogHost        = flag.String("mail_hog_host", envString("MAIL_HOG_HOST", ""), "Mailhog host")
-	// MailHostFrom       = flag.String("mail_hog_from", envString("MAIL_HOG_FROM", ""), "Mailhog email from")
-	// MailHogAdminEmail  = flag.String("mail_hog_admin_email", envString("MAIL_HOG_ADMIN_EMAIL", ""), "Mailhog admin email")
-	// ConfigFile = flag.String("db_config_file", envString("DB_CONFIG_FILE", ""), "DB configuration file")
-	)
-
 	flag.Parse()
 	config, err := db.NewConfig()
 	if err != nil {
-		log.Println("ERR", "could not reach out the app configuration")
+		log.Println(
+			"message", "could not reach out the app configuration",
+			"severity", "ERR")
 		return
 	}
 
@@ -39,7 +35,10 @@ func main() {
 
 	err = db.AutoMigrate(ambassadorDB)
 	if err != nil {
-		log.Println("ERR", err.Error())
+		log.Println(
+			"message", err.Error(),
+			"severity", "ERR",
+		)
 		return
 	}
 	redis := cache.NewCache(config.Redis.Port)
@@ -53,28 +52,7 @@ func main() {
 	r := registry.NewRegister(ambassadorDB, redis)
 	router.NewRouter(app, r.NewAppController())
 
-	app.Listen(":8000")
-
-	// database.Connect()
-	// database.AutoMigrate()
-	// database.SetUpRedis()
-
-	// // Refactor these dependencies :p
-	// stripe.Key = *StripeSecretApiKey
-	// controller.MailHogClient.Host = *MailHogHost
-	// controller.MailHogClient.From = *MailHostFrom
-	// controller.MailHogClient.AdminEmail = *MailHogAdminEmail
-
-	// app := fiber.New()
-
-	// // Enabling CORS
-	// app.Use(cors.New(cors.Config{
-	// 	AllowCredentials: true,
-	// }))
-
-	// routes.SetRoutes(app)
-
-	// app.Listen(":8000")
+	listenAndServe(app)
 }
 
 func envString(env, fallback string) string {
@@ -83,4 +61,35 @@ func envString(env, fallback string) string {
 		return fallback
 	}
 	return e
+}
+
+func listenAndServe(app *fiber.App) {
+	connClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, syscall.SIGINT)
+		<-sigint
+		log.Println(
+			"message", "stopping go-ambassador",
+			"severity", "INFO",
+		)
+		if err := app.Shutdown(); err != nil {
+			log.Println(err)
+		}
+		close(connClosed)
+	}()
+
+	if err := app.Listen(":8000"); err != http.ErrServerClosed {
+		log.Println(
+			"message", err.Error(),
+			"severity", "CRITICAL",
+		)
+	} else {
+		log.Println(
+			"message", "service stopped",
+			"severity", "NOTICE",
+		)
+	}
+	<-connClosed
+
 }
