@@ -2,7 +2,7 @@ build:
 	docker-compose build
 
 run:
-	docker-compose up
+	docker-compose up --remove-orphans
 
 build-run:
-	docker-compose up --build
+	docker-compose up --build --remove-orphans

@@ -1,0 +1,12 @@
+db:
+  user: root
+  password: root
+  net: tcp
+  addr: db:3306
+  name: ambassador
+  allowNativePasswords: true
+  params:
+    parseTime: "true"
+redis:
+  port: "6379"
+    
